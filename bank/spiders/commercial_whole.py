@@ -38,17 +38,19 @@ class DatabloggerSpider(CrawlSpider):
 
     # Method for parsing items
     def parse_item(self, response):
-        self.page += 1
         # filename = './bank/data/' + str(self.page) + '.json'
-        filename = './bank/data/commercial/html/' + str(self.page) + '.html'
-        with open(filename, 'wb') as f:
-            # object = {
-            #     'url': response.url
-            # }
-            # json.dump(object, f)
-            self.object_url[self.page] = response.url
+        if 'sinhala' not in response.url and 'tamil' not in response.url:
+            self.page += 1
+            filename = './bank/data/commercial/html/' + str(self.page) + '.html'
 
-            f.write(response.body)
-        filename_json = './bank/data/commercial/url_map.json'
-        with open(filename_json, 'w') as f:
-            json.dump(self.object_url, f)
+            with open(filename, 'wb') as f:
+                # object = {
+                #     'url': response.url
+                # }
+                # json.dump(object, f)
+                self.object_url[self.page] = response.url
+
+                f.write(response.body)
+            filename_json = './bank/data/commercial/url_map.json'
+            with open(filename_json, 'w') as f:
+                json.dump(self.object_url, f)
