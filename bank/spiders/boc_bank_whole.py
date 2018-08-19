@@ -1,6 +1,7 @@
 import json
-
+import unidecode
 import scrapy
+import re
 from scrapy.linkextractor import LinkExtractor
 from scrapy.spiders import Rule, CrawlSpider
 # from datablogger_scraper.items import DatabloggerScraperItem
@@ -16,7 +17,7 @@ class DatabloggerSpider(CrawlSpider):
     allowed_domains = ["web.boc.lk"]
 
     # The URLs to start with
-    start_urls = ["http://web.boc.lk/boc/index.php"]
+    start_urls = ["http://web.boc.lk/boc/index.php?route=product/category&path=87"]
 
     # This spider has one rule: extract all (unique and canonicalized) links, follow them and parse them using the parse_items method
     rules = [
@@ -40,17 +41,24 @@ class DatabloggerSpider(CrawlSpider):
     def parse_item(self, response):
 
         if 'sinhala' not in response.url and 'tamil' not in response.url:
-            if 'product' in response.url and 'desc=1'in response.url:
-                self.page += 1
-                filename = './bank/data/boc/html/' + str(self.page) + '.html'
-                with open(filename, 'wb') as f:
-                    # object = {
-                    #     'url': response.url
-                    # }
-                    # json.dump(object, f)
-                    self.object_url[self.page] = response.url
+            if 'route=product/category&path=87'in response.url:
+                heading = response.selector.xpath('/html/body/div[1]/div/div[3]/div[2]/div/div[2]/div/div[1]/h1/text()').extract_first()
+                print(heading)
+                account_deatils = response.selector.xpath('//*[@id="corporate-page"]/div[1]').extract_first()
+                text = account_deatils
+                text = unidecode.unidecode(str(text))
+                cleanr = re.compile('<.*?>')
+                text = re.sub(cleanr, ' ', text)
+                text = re.sub('\s+', ' ', text)
+                # text = " ".join(text.split())
 
-                    f.write(response.body)
-                filename_json = './bank/data/boc/url_map.json'
+                account_object = {
+                    'url': response.url,
+                    'bank': 'boc',
+                    'name': heading,
+                    'details': text
+                }
+
+                filename_json = './bank/data/boc/boc_' + str(heading) + '.json'
                 with open(filename_json, 'w') as f:
-                    json.dump(self.object_url, f)
+                    json.dump(account_object, f)

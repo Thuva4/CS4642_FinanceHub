@@ -7,7 +7,7 @@ from scrapy.spiders import Rule, CrawlSpider
 
 
 # from datablogger_scraper.items import DatabloggerScraperItem
-
+import unidecode
 
 class HNBSpider(CrawlSpider):
     # The name of the spider
@@ -43,11 +43,13 @@ class HNBSpider(CrawlSpider):
     def parse_item(self, response):
         # filename = './bank/data/' + str(self.page) + '.json'
         if 'https://www.hnb.net/personal/savings' in response.url:
-            self.page += 1
             # filename = './bank/data/hnb/html/' + str(self.page) + '.html'
+            heading = response.selector.xpath('//*[@id="TopInner"]/div/div[1]/div/div/h1/text()').extract_first()
+            print(heading)
             account_deatils = response.selector.xpath('//*[@id="Start-saving"]').extract_first()
             account_offers = response.selector.xpath('//*[@id="offer-you"]').extract_first()
             text = account_deatils + account_offers
+            text = unidecode.unidecode(str(text))
             cleanr = re.compile('<.*?>')
             text = re.sub(cleanr, ' ', text)
             text = re.sub('\s+', ' ', text)
@@ -55,10 +57,12 @@ class HNBSpider(CrawlSpider):
 
             account_object = {
                 'url': response.url,
+                'bank': 'hnb',
+                'name': heading,
                 'details': text
             }
             self.bank_objects[self.page] = account_object
 
-            filename_json = './bank/data/hnb/url_map.json'
+            filename_json = './bank/data/hnb/hnb_'+ str(heading) + '.json'
             with open(filename_json, 'w') as f:
-                json.dump(self.bank_objects, f)
+                json.dump(account_object, f)

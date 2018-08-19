@@ -42,8 +42,9 @@ class HNBSpider(CrawlSpider):
         # filename = './bank/data/' + str(self.page) + '.json'
         # if '/si/' not in response.url and '/ta/' not in response.url:
         if 'http://www.nsb.lk/product/' in response.url:
-            self.page += 1
             # filename = './bank/data/nsb/html/' + str(self.page) + '.html'
+            heading = response.selector.xpath(
+                '/html/body/div[1]/section/div/div/div[1]/div/div/h2/text()').extract_first()
             text = response.selector.xpath('//html/body/div[1]/section/div/div/div[1]/div/div').extract_first()
             cleanr = re.compile('<.*?>')
             text = re.sub(cleanr, ' ', text)
@@ -52,10 +53,11 @@ class HNBSpider(CrawlSpider):
 
             account_object = {
                 'url': response.url,
+                'bank': 'nsb',
+                'name': heading,
                 'details': text
             }
-            self.bank_objects[self.page] = account_object
 
-            filename_json = './bank/data/nsb/url_map.json'
+            filename_json = './bank/data/nsb/nsb_' + str(heading) + '.json'
             with open(filename_json, 'w') as f:
-                json.dump(self.bank_objects, f)
+                json.dump(account_object, f)
